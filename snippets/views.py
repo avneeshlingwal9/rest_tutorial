@@ -1,11 +1,13 @@
 
-from rest_framework import mixins
+from rest_framework import permissions
 from rest_framework import generics
 
-from django.http import Http404
+from django.contrib.auth.models import User
 
 from snippets.models import Snippet
-from snippets.serializers import SnippetSerializer
+from snippets.serializers import SnippetSerializer , UserSerializer
+
+from .permissions import IsOwnerOrReadOnly
 
 # Create your views here.
 
@@ -15,6 +17,13 @@ class SnippetList(generics.ListCreateAPIView):
 
     serializer_class = SnippetSerializer
 
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        
+        return serializer.save(owner = self.request.user)
+    
+
 
 class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 
@@ -22,7 +31,21 @@ class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = SnippetSerializer
 
-    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly ]
+
+
+class UserList(generics.ListAPIView):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer 
+
+
+class UserDetail(generics.RetrieveAPIView):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
 
 # Mixins. 
 # class SnippetList(generics.GenericAPIView, mixins.ListModelMixin , mixins.CreateModelMixin):
